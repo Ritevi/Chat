@@ -1,0 +1,167 @@
+<% layout('../views/layout/page.ejs') -%>
+
+<script src="/socket.io/socket.io.js"></script>
+
+<link href="stylesheets/style.css" rel="stylesheet">
+
+<body>
+<div style="width: inherit; height: inherit">
+    <div class="messaging">
+        <div class="inbox_msg">
+            <div class="inbox_people">
+                <div class="headind_srch">
+                    <div class="recent_heading">
+                        <h4>Recent</h4>
+                    </div>
+                    <div class="srch_bar">
+                        <div class="stylish-input-group">
+                            <input type="text" class="search-bar"  placeholder="Search" >
+                            <span class="input-group-addon">
+                <button type="button"> <i class="fa fa-search" aria-hidden="true"></i> </button>
+                </span> </div>
+                    </div>
+
+                    <div class="inbox_chat">
+                        <% data.forEach(function(elem) { %>
+                        <div class="chat_list">
+                            <div class="chat_people">
+                                <div class="chat_img"> <img src="https://ptetutorials.com/images/user-profile.png" alt="sunil"> </div>
+                                <div class="chat_ib" name="<%= elem.username %>">
+                                    <h5><span name='username'><%= elem.username %></span></h5>
+                                    <span name="LastMessage"></span>
+                                </div>
+                            </div>
+                        </div>
+                            <% }); %>
+                    </div>
+
+                </div>
+
+            </div>
+            <div class="mesgs">
+                <div class="msg_history">
+                </div>
+                <div class="type_msg">
+                    <form>
+                    <div class="input_msg_write">
+                        <input type="text" class="write_msg" placeholder=" Type a message" />
+                        <button class="msg_send_btn" type="submit"><i class="fa fa-paper-plane-o" aria-hidden="true"></i></button>
+                    </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div></div>
+</body>
+
+
+<script>
+    var socket = io('',{
+        'reconnect': false
+    });
+    var month = ['Jan','Feb','Mar','Apr','May','Jun','Aug','Sep','Oct','Nov','Dec'];
+
+    var incoming_msg = function (body,date) {return $("<div class=\"incoming_msg\">\n" +
+        "                        <div class=\"incoming_msg_img\"> <img src=\"https://ptetutorials.com/images/user-profile.png\" alt=\"sunil\"> </div>\n" +
+        "                        <div class=\"received_msg\">\n" +
+        "                            <div class=\"received_withd_msg\">\n" +
+        "                                <p>" + body +
+        "                                    </p>\n" +
+        "                                <span class=\"time_date\"> "+ date.getHours()+":"+ date.getMinutes()+" AM" +"    | "+  month[date.getMonth()]+" " +date.getDate()+"</span></div>\n" +
+        "                        </div>\n" +
+        "                    </div>");}
+
+    var outgoing_msg = function(body, date) { return $("<div class=\"outgoing_msg\">\n" +
+        "                        <div class=\"sent_msg\">\n" +
+        "                            <p>" + body + "</p>\n" +
+        "                            <span class=\"time_date\"> "+ date.getHours()+":"+ date.getMinutes()+" AM" +"    | "+  month[date.getMonth()]+" " +date.getDate()+"</span></div>\n" +
+        "                    </div>");
+
+    }
+    var username;
+    var form = $('.type_msg form');
+    var input = $('.write_msg');
+    var msg = $('.msg_history');
+    var users = $('.chat_list');
+    var LastMessage=$('.chat_ib');
+
+    var ScrollDown = function()
+    {
+        var scrollHeight = Math.max(this.scrollHeight, this.clientHeight);
+        this.scrollTop = scrollHeight - this.clientHeight;
+    }
+
+    $(users).click(function()
+    {   msg.empty();
+        socket.emit('InviteToRoom',$(this).find('[name = "username"]').text());
+        //add class active_chat
+    });
+
+    function reconnect() {
+        socket.once('error',function () {
+            setTimeout(reconnect,500);
+        });
+        socket.socket.connect();
+    }
+
+    function sendMessage() {
+        var text = input.val();
+        var date = new Date();
+        socket.emit('message', text, date, function() {
+            msg.append(outgoing_msg(text, date));
+            msg.each(ScrollDown);
+        });
+        input.val('');
+
+        return false;
+    }
+
+
+
+    socket
+        .on('message', function(date, message) {
+            msg.append(incoming_msg(message,new Date(date)));
+            msg.each(ScrollDown);
+        })
+        .on('leave', function(username) {
+            // status
+        })
+        .on('join', function(username) {
+//status
+        })
+        .on('connect', function() {
+            form.on('submit', sendMessage);
+            input.prop('disabled', false);
+        })
+        .on('disconnect', function() {
+            form.off('submit', sendMessage);
+            input.prop('disabled', true);
+            this.emit('ClientError');
+        })
+        .on('logout', function() {
+            location.href = "/";
+        })
+        .on('ClientError', function(reason) {
+            if (reason == "handshake unauthorized") {
+                //status
+            } else {
+                setTimeout(function() {
+                    socket.socket.connect();
+                }, 500);
+            }
+        })
+        .on('RoomNotExist', function (users) {
+            socket.emit('CreateRoom',users);
+        })
+        .on('OldMessage', function (Messages) {
+            Messages.forEach(function (letter) {
+                if (letter.user === username) msg.append(incoming_msg(letter.body,new Date(letter.date)))
+                else msg.append((outgoing_msg(letter.body,new Date(letter.date))));
+            })
+            msg.each(ScrollDown);
+        })
+        .on('Username',function (name) {
+            username = name;
+        })
+</script>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title><%=blocks.title%></title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+</head>
+<body>
+<header>
+    <%-blocks.header%>
+</header>
+<%-partial('../partials/topNavigator.ejs')%>
+<section class="container">
+
+
+
+    <h1><%blocks.title%></h1>
+
+    <%-body -%>
+</section>
+<footer>
+    <%-blocks.footer%>
+</footer>
+</body>
+</html>
+
+
+

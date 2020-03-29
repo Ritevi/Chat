@@ -1,0 +1,70 @@
+<div class="container" style="list-style-type: none;">
+    <nav class="navbar navbar-light" style="background-color: #e3f2fd;">
+        <!-- Navbar content -->
+        <li class="col-9"><a href="/">Главная</a></li>
+    <% if (user) { %>
+            <li class="col-2"><a href="/account"><%= user.username %>
+    <% } %>
+        <% if (user) { %>
+            <form id="logout" method=POST action=/logout>
+                <li class="col-2"><a href="" onclick="$('#logout').submit();return false;">Выйти</a></li>
+            </form>
+        <% } else { %>
+        <li>
+            <div class="dropdown">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Войти
+            </button>
+            <div class="dropdown-menu " style="width: 250px" aria-labelledby="dropdownMenuButton" style="width: 100px">
+                <p>Введите данные пользователя.</p>
+                <form class="form-horizontal login-form" name="login-form">
+                    <label for="input-username" class="col-lg-2 control-label">username</label>
+
+                    <div class="col-lg-10">
+                        <input name="username" value="" type="text" class="form-control" id="input-email" placeholder="username">
+                    </div>
+                    <div class="form-group">
+                        <label for="input-password" class="col-lg-2 control-label">password</label>
+
+                        <div class="col-lg-10">
+                            <input name="password" value="" type="password" class="form-control" id="input-password" placeholder="password">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-lg-offset-2 col-lg-10">
+                            <button type="submit" class="btn btn-primary" data-loading-text="Отправляю...">Войти</button>
+                            <a href="/register" type="" class="btn btn-primary" data-loading-text="Отправляю...">Регистрация</a>
+                            <span class="help-block error"></span>
+                        </div>
+                    </div>
+
+                </form>
+                <div class="errors"> </div>
+            </div>
+            </div>
+        <li>
+        <% } %>
+    </nav>
+</div>
+
+<script>
+    $(document.forms['login-form']).on('submit', function() {
+        let form = $(this);
+        $('.error', form).html('');
+        $(":submit", form).button("loading");
+        $.ajax({
+            url: "/login",
+            method: "POST",
+            data: form.serialize(),
+            complete: function(e, xhr, settings){
+                if(e.status === 200){
+                    form.html("Вы вошли в сайт").addClass('alert-success');
+                    window.location.href = "/chat";
+                }else{
+                    $('.error').append(e.responseText);
+                }
+            }
+        });
+        return false;
+    });
+</script>
